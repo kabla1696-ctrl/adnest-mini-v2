@@ -1,56 +1,47 @@
-(function () {
-var old = document.getElementById("adnest-mini");
-if (old) old.remove();
+cat > /home/sheikhzidan3/adnest-mini-v2/content.js <<'EOF'
+(async () => {
+const BOX_ID = 'adnest-mini';
+const ROTATE_CHECK_MS = 30000;
 
-var box = document.createElement("div");
-box.id = "adnest-mini";
-box.style.position = "fixed";
-box.style.right = "16px";
-box.style.bottom = "16px";
-box.style.zIndex = "2147483647";
-box.style.background = "#111827";
-box.style.color = "#fff";
-box.style.padding = "10px 12px";
-box.style.borderRadius = "10px";
-box.style.fontFamily = "Arial,sans-serif";
-box.style.fontSize = "12px";
-box.style.maxWidth = "280px";
-box.style.border = "1px solid #374151";
-
-var meta = document.createElement("div");
-meta.textContent = "Sponsored · test";
-meta.style.fontSize = "10px";
-meta.style.color = "#9ca3af";
-meta.style.marginBottom = "6px";
-
-var title = document.createElement("div");
-title.textContent = "AdNest test widget";
-title.style.fontSize = "13px";
-title.style.fontWeight = "700";
-title.style.marginBottom = "4px";
-
-var body = document.createElement("div");
-body.textContent = "If you see this, content script is working.";
-body.style.fontSize = "12px";
-body.style.color = "#d1d5db";
-body.style.marginBottom = "8px";
-
-var link = document.createElement("a");
-link.href = "https://example.com";
-link.target = "_blank";
-link.rel = "noopener noreferrer";
-link.textContent = "Open";
-link.style.display = "inline-block";
-link.style.background = "#2563eb";
-link.style.color = "#fff";
-link.style.textDecoration = "none";
-link.style.padding = "6px 9px";
-link.style.borderRadius = "7px";
-link.style.fontSize = "11px";
-
-box.appendChild(meta);
-box.appendChild(title);
-box.appendChild(body);
-box.appendChild(link);
+function ensureBox() {
+let box = document.getElementById(BOX_ID);
+if (!box) {
+box = document.createElement('div');
+box.id = BOX_ID;
+box.style.cssText =
+'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;font-family:Arial,sans-serif;font-size:12px;max-width:280px;border:1px solid #374151';
+box.innerHTML = `
+<div id="adnest-meta" style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Sponsored</div>
+<div id="adnest-title" style="font-size:13px;font-weight:700;margin-bottom:4px;">Loading...</div>
+<div id="adnest-body" style="font-size:12px;color:#d1d5db;margin-bottom:8px;">Please wait...</div>
+<a id="adnest-link" href="#" target="_blank" rel="noopener noreferrer"
+style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:6px 9px;border-radius:7px;font-size:11px;">Open</a>
+`;
 document.body.appendChild(box);
+}
+return box;
+}
+
+function renderAd(ad) {
+const box = ensureBox();
+box.querySelector('#adnest-meta').textContent = `Sponsored · ${ad.category || 'general'}`;
+box.querySelector('#adnest-title').textContent = ad.title || 'Sponsored';
+box.querySelector('#adnest-body').textContent = ad.body || '';
+const link = box.querySelector('#adnest-link');
+link.textContent = ad.cta || 'Open';
+link.href = ad.url || 'https://example.com';
+link.onclick = () => chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
+}
+
+async function tick() {
+const resp = await chrome.runtime.sendMessage({
+type: 'ADNEST_GET_AD',
+host: location.hostname
+});
+if (resp?.ok && resp?.ad) renderAd(resp.ad);
+}
+
+await tick();
+setInterval(tick, ROTATE_CHECK_MS);
 })();
+EOF
