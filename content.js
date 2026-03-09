@@ -1,7 +1,7 @@
 (async () => {
 const BOX_ID = 'adnest-mini';
-const ROTATE_CHECK_MS = 30000; // প্রতি 30s check
-const FORCE_SHOW = true; // true = সবসময় demo ad দেখাবে (debug mode)
+const ROTATE_CHECK_MS = 30000;
+const FORCE_SHOW = true;
 
 function ensureBox() {
 let box = document.getElementById(BOX_ID);
@@ -32,25 +32,21 @@ box.querySelector('#adnest-body').textContent = ad.body || '';
 const link = box.querySelector('#adnest-link');
 link.textContent = ad.cta || 'Open';
 link.href = ad.url || 'https://example.com';
-link.onclick = () => {
-chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
-};
+link.onclick = () => chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
 }
 
 async function tryRenderAd() {
-// DEBUG MODE: always show demo ad immediately
 if (FORCE_SHOW) {
 renderAd({
 category: 'demo',
 title: 'Sponsored: Demo Ad',
-body: 'If you can see this, your widget is working correctly.',
+body: 'If you can see this, your widget is working.',
 cta: 'Open',
 url: 'https://example.com'
 });
 return;
 }
 
-// NORMAL MODE
 const resp = await chrome.runtime.sendMessage({
 type: 'ADNEST_GET_AD',
 host: location.hostname
@@ -60,9 +56,6 @@ if (!resp?.ok || !resp?.ad) return;
 renderAd(resp.ad);
 }
 
-// প্রথমে render
 await tryRenderAd();
-
-// refresh ছাড়াই rotate check
 setInterval(tryRenderAd, ROTATE_CHECK_MS);
 })();
