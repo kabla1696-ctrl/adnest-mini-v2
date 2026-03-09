@@ -42,5 +42,5 @@ if (resp?.ok && resp?.ad) renderAd(resp.ad);
 }
 
 await tick();
-setInterval(tick, 10000);
+setInterval(tick, 10000); // 10 sec
 })();
