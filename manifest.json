@@ -1,15 +1,15 @@
 {
 "manifest_version": 3,
 "name": "AdNest Mini",
-"version": "0.0.6",
-"description": "Sponsored widget with Adsterra smartlink support.",
+"version": "0.0.8",
+"description": "Sponsored visual widget with safer local token config.",
 "permissions": ["storage"],
 "host_permissions": [
 "<all_urls>",
 "https://api1.adsterra.com/*"
 ],
 "background": {
-"service_worker": "background.js"
+"service_worker": "bootstrap.js"
 },
 "action": {
 "default_popup": "popup.html"
