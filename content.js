@@ -73,14 +73,13 @@ if (timer) clearInterval(timer);
 }
 }
 
-// duplicate timer stop
 if (window.__ADNEST_TIMER__) {
 clearInterval(window.__ADNEST_TIMER__);
 window.__ADNEST_TIMER__ = null;
 }
 
 safeRender();
-timer = setInterval(safeRender, 10000); // 10 sec
+timer = setInterval(safeRender, 10000);
 window.__ADNEST_TIMER__ = timer;
 
 window.addEventListener("beforeunload", function () {
@@ -89,7 +88,5 @@ clearInterval(window.__ADNEST_TIMER__);
 window.__ADNEST_TIMER__ = null;
 }
 });
-} catch (_) {
-// keep page safe
-}
+} catch (_) {}
 })();
