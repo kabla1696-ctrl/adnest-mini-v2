@@ -1,7 +1,7 @@
-cat > content.js <<'EOF'
 (async () => {
 const BOX_ID = 'adnest-mini';
-const ROTATE_CHECK_MS = 30000; // প্রতি 30s এ check করবে
+const ROTATE_CHECK_MS = 30000; // প্রতি 30s check
+const FORCE_SHOW = true; // true = সবসময় demo ad দেখাবে (debug mode)
 
 function ensureBox() {
 let box = document.getElementById(BOX_ID);
@@ -15,37 +15,54 @@ box.innerHTML = `
 <div id="adnest-meta" style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Sponsored</div>
 <div id="adnest-title" style="font-size:13px;font-weight:700;margin-bottom:4px;">Loading...</div>
 <div id="adnest-body" style="font-size:12px;color:#d1d5db;margin-bottom:8px;">Please wait</div>
-<a id="adnest-link" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:6px 9px;border-radius:7px;font-size:11px;">Open</a>
+<a id="adnest-link" href="#" target="_blank" rel="noopener noreferrer"
+style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:6px 9px;border-radius:7px;font-size:11px;">
+Open
+</a>
 `;
 document.body.appendChild(box);
 return box;
 }
 
-async function tryRenderAd() {
-const resp = await chrome.runtime.sendMessage({
-type: 'ADNEST_GET_AD',
-host: location.hostname
-});
-
-if (!resp?.ok || !resp?.ad) return; // frequency/block/disabled হলে skip
-
+function renderAd(ad) {
 const box = ensureBox();
-box.querySelector('#adnest-meta').textContent = `Sponsored · ${resp.ad.category || 'general'}`;
-box.querySelector('#adnest-title').textContent = resp.ad.title || 'Sponsored';
-box.querySelector('#adnest-body').textContent = resp.ad.body || '';
+box.querySelector('#adnest-meta').textContent = `Sponsored · ${ad.category || 'general'}`;
+box.querySelector('#adnest-title').textContent = ad.title || 'Sponsored';
+box.querySelector('#adnest-body').textContent = ad.body || '';
 const link = box.querySelector('#adnest-link');
-link.textContent = resp.ad.cta || 'Open';
-link.href = resp.ad.url || '#';
-
+link.textContent = ad.cta || 'Open';
+link.href = ad.url || 'https://example.com';
 link.onclick = () => {
 chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
 };
 }
 
-// প্রথম render চেষ্টা
+async function tryRenderAd() {
+// DEBUG MODE: always show demo ad immediately
+if (FORCE_SHOW) {
+renderAd({
+category: 'demo',
+title: 'Sponsored: Demo Ad',
+body: 'If you can see this, your widget is working correctly.',
+cta: 'Open',
+url: 'https://example.com'
+});
+return;
+}
+
+// NORMAL MODE
+const resp = await chrome.runtime.sendMessage({
+type: 'ADNEST_GET_AD',
+host: location.hostname
+});
+
+if (!resp?.ok || !resp?.ad) return;
+renderAd(resp.ad);
+}
+
+// প্রথমে render
 await tryRenderAd();
 
-// refresh ছাড়া auto-rotate check
+// refresh ছাড়াই rotate check
 setInterval(tryRenderAd, ROTATE_CHECK_MS);
 })();
-EOF
