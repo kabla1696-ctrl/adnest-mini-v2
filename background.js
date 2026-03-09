@@ -1,7 +1,7 @@
 console.log("ADNEST_BG_LOADED", Date.now());
 
 const API_BASE = "https://api1.adsterra.com/api/v1";
-const API_KEY = "754c3555a75e97640d7d9cfccbabb99b"; // নিজের token বসাও (GitHub-এ push কোরো না)
+const API_KEY = "754c3555a75e97640d7d9cfccbabb99b"; // নিজের token বসাও
 
 const DEFAULTS = {
 enabled: true,
@@ -37,13 +37,26 @@ return [];
 
 try {
 const url = `${API_BASE}/user/smart-links.json?status=active`;
-const res = await fetch(url, {
+
+// প্রথমে X-API-Key
+let res = await fetch(url, {
 method: "GET",
 headers: {
 "Accept": "application/json",
 "X-API-Key": API_KEY
 }
 });
+
+// যদি fail করে, Bearer try
+if (!res.ok) {
+res = await fetch(url, {
+method: "GET",
+headers: {
+"Accept": "application/json",
+"Authorization": `Bearer ${API_KEY}`
+}
+});
+}
 
 console.log("ADSTERRA_STATUS", res.status);
 
@@ -90,29 +103,21 @@ console.log("ADNEST_LIVEADS_EMPTY_USING_FALLBACK");
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
-console.log("ADNEST_ONINSTALLED");
 const data = await chrome.storage.sync.get(null);
 if (!Object.keys(data).length) {
 await chrome.storage.sync.set(DEFAULTS);
-console.log("ADNEST_DEFAULTS_SET");
 }
 await refreshLiveAds();
 });
 
 chrome.runtime.onStartup?.addListener(async () => {
-console.log("ADNEST_ONSTARTUP");
 await refreshLiveAds();
 });
 
-// প্রতি 10 মিনিটে refresh
 setInterval(() => {
-console.log("ADNEST_INTERVAL_REFRESH");
-refreshLiveAds().catch((e) => console.log("ADNEST_INTERVAL_ERR", String(e)));
+refreshLiveAds().catch(() => {});
 }, 10 * 60 * 1000);
-
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-console.log("ADNEST_MSG", msg);
-
 (async () => {
 const s = await chrome.storage.sync.get(null);
 
