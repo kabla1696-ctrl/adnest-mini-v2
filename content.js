@@ -1,17 +1,13 @@
-cat >/home/sheikhzidan3/adnest-mini-v2/content.js <<'EOF'
 (async () => {
 const BOX_ID = 'adnest-mini';
-const ROTATE_CHECK_MS = 30000; // প্রতি 30s check
-const FORCE_SHOW = false; // real mode
 
 function ensureBox() {
 let box = document.getElementById(BOX_ID);
-if (box) return box;
-
+if (!box) {
 box = document.createElement('div');
 box.id = BOX_ID;
 box.style.cssText =
-'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;font-family:Arial,sans-serif;font-size:12px;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.35);border:1px solid #374151';
+'position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111827;color:#fff;padding:10px 12px;border-radius:10px;font-family:Arial,sans-serif;font-size:12px;max-width:280px;border:1px solid #374151';
 box.innerHTML = `
 <div id="adnest-meta" style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Sponsored</div>
 <div id="adnest-title" style="font-size:13px;font-weight:700;margin-bottom:4px;">Loading...</div>
@@ -22,6 +18,7 @@ Open
 </a>
 `;
 document.body.appendChild(box);
+}
 return box;
 }
 
@@ -36,28 +33,14 @@ link.href = ad.url || 'https://example.com';
 link.onclick = () => chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
 }
 
-async function tryRenderAd() {
-if (FORCE_SHOW) {
-renderAd({
-category: 'demo',
-title: 'Sponsored: Demo Ad',
-body: 'If you can see this, your widget is working.',
-cta: 'Open',
-url: 'https://example.com'
-});
-return;
-}
-
+async function tick() {
 const resp = await chrome.runtime.sendMessage({
 type: 'ADNEST_GET_AD',
 host: location.hostname
 });
-
-if (!resp?.ok || !resp?.ad) return;
-renderAd(resp.ad);
+if (resp?.ok && resp?.ad) renderAd(resp.ad);
 }
 
-await tryRenderAd();
-setInterval(tryRenderAd, ROTATE_CHECK_MS);
+await tick();
+setInterval(tick, 30000);
 })();
-EOF
