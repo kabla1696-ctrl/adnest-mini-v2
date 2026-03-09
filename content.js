@@ -29,12 +29,24 @@ box.querySelector('#adnest-body').textContent = ad.body || '';
 const link = box.querySelector('#adnest-link');
 link.textContent = ad.cta || 'Open';
 link.href = ad.url || 'https://example.com';
-link.onclick = () => chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
+link.onclick = () => {
+try {
+chrome.runtime.sendMessage({ type: 'ADNEST_CLICK' });
+} catch (_) {}
+};
 }
 
 async function tick() {
-const resp = await chrome.runtime.sendMessage({ type: 'ADNEST_GET_AD', host: location.hostname });
+try {
+const resp = await chrome.runtime.sendMessage({
+type: 'ADNEST_GET_AD',
+host: location.hostname
+});
 if (resp?.ok && resp?.ad) renderAd(resp.ad);
+} catch (e) {
+// extension reloaded/unloaded -> ignore old context error
+return;
+}
 }
 
 await tick();
